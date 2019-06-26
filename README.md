@@ -1,4 +1,6 @@
-## Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams
+## Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams (accepted to Interspeech'19)
+
+**Open source pending Texas A&M University IP office approval, please check back later, thanks for your patience.**
 
 - We host the code and audio samples for our Interspeech'19 submission here
 - The code and pretrained models will be released after the peer review finishes
