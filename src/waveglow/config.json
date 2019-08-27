@@ -1,0 +1,42 @@
+{
+    "train_config": {
+        "output_directory": "",
+        "epochs": 10000,
+        "learning_rate": 1e-5,
+        "sigma": 0.7071,
+        "iters_per_checkpoint": 2500,
+        "batch_size": 3,
+        "seed": 16807,
+        "checkpoint_path": "/media/guanlong/DATA1/exp/ppg-speech/waveglow/waveglow_20190322-164430/waveglow_245000"
+    },
+    "data_config": {
+        "training_files":"/home/guanlong/PycharmProjects/ppg-speech/data/filelists/zhaa_train_filelist_noise_reduced.txt",
+        "segment_length": 10000,
+        "sampling_rate": 16000,
+        "filter_length": 1024,
+        "hop_length": 160,
+        "win_length": 1024,
+        "mel_fmin": 0.0,
+        "mel_fmax": 8000.0
+    },
+    "dist_config": {
+        "dist_backend": "nccl",
+        "dist_url": "tcp://localhost:54321",
+        "rank": 0,
+        "group_name": ""
+    },
+
+    "waveglow_config": {
+        "n_mel_channels": 80,
+        "hop_length": 160,
+        "n_flows": 12,
+        "n_group": 8,
+        "n_early_every": 4,
+        "n_early_size": 2,
+        "WN_config": {
+            "n_layers": 8,
+            "n_channels": 256,
+            "kernel_size": 3
+        }
+    }
+}

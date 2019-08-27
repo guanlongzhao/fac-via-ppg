@@ -1,0 +1,10 @@
+/data_repo/arctic/ykwk/cache/0001.proto
+/data_repo/arctic/ykwk/cache/0002.proto
+/data_repo/arctic/ykwk/cache/0003.proto
+/data_repo/arctic/ykwk/cache/0004.proto
+/data_repo/arctic/ykwk/cache/0005.proto
+/data_repo/arctic/ykwk/cache/0006.proto
+/data_repo/arctic/ykwk/cache/0007.proto
+/data_repo/arctic/ykwk/cache/0008.proto
+/data_repo/arctic/ykwk/cache/0009.proto
+/data_repo/arctic/ykwk/cache/0010.proto

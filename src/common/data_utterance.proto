@@ -1,0 +1,157 @@
+syntax = "proto2";
+
+package data_utterance;
+
+message DoubleMatrix {
+    // Next available ID: 4
+    optional uint32 num_row = 1;
+    optional uint32 num_col = 2;
+    repeated double data = 3 [packed = true];
+}
+
+message FloatMatrix {
+    // Next available ID: 4
+    optional uint32 num_row = 1;
+    optional uint32 num_col = 2;
+    repeated float data = 3 [packed = true];
+}
+
+message Int32Matrix {
+    // Next available ID: 4
+    optional uint32 num_row = 1;
+    optional uint32 num_col = 2;
+    repeated int32 data = 3 [packed = true];
+}
+
+message BinaryMatrix {
+    // Next available ID: 4
+    optional uint32 num_row = 1;
+    optional uint32 num_col = 2;
+    repeated bool data = 3 [packed = true];
+}
+
+message Segment {
+    // Next available ID: 5
+    repeated string symbol = 1;
+    optional FloatMatrix start_time = 2;
+    optional FloatMatrix end_time = 3;
+    optional int32 num_item = 4;
+}
+
+message VocoderFeature {
+    // Next available ID: 5
+    // Contains everything from vocoder analysis.
+    enum VocoderName {
+        // Next available ID: 3
+        WORLD = 0;
+        TANDEM_STRAIGHT = 1;
+        LEGACY_STRAIGHT = 2;
+    }
+    optional VocoderName vocoder = 1;
+
+    message Filter {
+        // Next available ID: 4
+        // Spectrogram, a T*D matrix.
+        optional FloatMatrix spec = 1;
+        // Mel-Frequency Cepstral Coefficients, a T*D matrix.
+        optional FloatMatrix mfcc = 2;
+        // Mel-Cepstral Coefficients, a T*D matrix.
+        optional FloatMatrix mcep = 3;
+    }
+    optional Filter filter = 2;
+
+    message Source {
+        // Next available ID: 6
+        optional FloatMatrix f0 = 1; //Fundamental frequency
+        // Full aperiodicity, a T*D matrix.
+        optional FloatMatrix ap = 2;
+        // Band aperiodicity, a T*D matrix.
+        optional FloatMatrix bap = 3;
+        optional FloatMatrix vuv = 4; // Voicing
+        optional FloatMatrix temporal_position = 5; // Start time of each analysis window in seconds
+    }
+    optional Source source = 3;
+
+    message AnalysisParam {
+        // Next available ID: 16
+        optional float window_size = 1;
+        optional string window_type = 2;
+        optional float shift = 3;
+        optional int32 num_frame = 4;
+        optional float alpha = 5; // Alpha for MCEP analysis
+        optional int32 fft_size = 6;
+        optional int32 spec_dim = 7;
+        optional int32 mfcc_dim = 8;
+        optional int32 mcep_dim = 9;
+        optional float f0_floor = 10; // F0 search range: floor
+        optional float f0_ceil = 11; // F0 search range: ceil
+        optional string timestamp = 12; // Analysis timestamp
+        optional int32 ap_dim = 13;
+        optional int32 bap_dim = 14;
+        optional string pitch_tracker = 15;
+    }
+    optional AnalysisParam param = 4;
+}
+
+message MetaData {
+    // Next available ID: 6
+    optional string speaker_id = 1;
+    enum Dialect {
+        // Next available ID: 11
+        EN_US = 0; // General American English
+        EN_CN = 1; // Mandarin-accent English
+        EN_SP = 2; // Mid-/South-America-Spanish-accent English
+        EN_ES = 3; // Spain-Spanish-accent English
+        EN_AB = 4; // Arabic-accent English
+        EN_KR = 5; // Korean-accent English
+        EN_IN = 6; // Indian English
+        EN_VN = 7; // Vietnamese-accent English
+        EN_CA = 8; // Canadian English
+        EN_GB = 9; // British English
+        EN_XS = 10; // Scottish English
+    }
+    optional Dialect dialect = 2;
+    enum Gender {
+        // Next available ID: 3
+        M = 0; // Male
+        F = 1; // Female
+        O = 2; // Other
+    }
+    optional Gender gender = 3;
+    optional string original_file = 4; // Original wave file location
+    optional int32 num_channel = 5;
+}
+
+message KaldiParam {
+    // Next available ID: 4
+    // Kaldi related settings.
+    optional float shift = 1;
+    optional float window_size = 2;
+    optional string window_type = 3;
+}
+
+message DataUtterance {
+    // Next available ID: 14
+    // This message defines a generic utterance class that contains a lot of
+    // useful information.
+    // Original waveform data, a S*C matrix, S is number of samples and C is
+    // number of channels.
+    optional FloatMatrix wav = 1;
+    optional int32 fs = 2; // Sampling frequency
+    optional string text = 3; // Text transcript
+    optional string align = 4; // A TextGrid file serialized into a string
+    // Full phonetic posteriorgram (PPG), a T*D matrix. T is number of frames
+    // and D is number of feature dimensions.
+    optional FloatMatrix ppg = 5;
+    // Monophone PPG, a T*D matrix.
+    optional FloatMatrix monophone_ppg = 6;
+    optional Segment phone = 7; // Phoneme-level alignment, in frames
+    optional Segment word = 8; // Word-level alignment, in frames
+    optional Int32Matrix lab = 9; // Frame-level alignment, have to use symtable to decode
+    optional VocoderFeature vocoder_feat = 10;
+    optional MetaData meta_data = 11;
+    optional string utterance_id = 12;
+    optional KaldiParam kaldi_param = 13;
+
+    extensions 101 to 200;
+}
