@@ -28,13 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""From https://github.com/NVIDIA/tacotron2"""
+"""Modified from https://github.com/NVIDIA/tacotron2"""
 
 import numpy as np
 from scipy.io.wavfile import read
 import torch
-from kaldi.util.table import RandomAccessMatrixReaderMapped
-from kaldi.util.io import write_matrix
 from scipy import signal
 
 
@@ -112,26 +110,6 @@ def to_gpu(x):
     if torch.cuda.is_available():
         x = x.cuda(non_blocking=True)
     return torch.autograd.Variable(x)
-
-
-def dump_fmllr_mat(transform_path, utt2spk_path, utt_id, output_path):
-    """Dump the fmllr matrix for a specific utterance/speaker.
-
-    To use this, you have to fix a bug in pykaldi's "table" module. In
-    kaldi.util.table.py:_RandomAccessReaderMappedBase, around line 568,
-    change the uppercase "Open" to lowercase "open".
-
-    Args:
-        transform_path: Path to a RandomAccessMatrix file.
-        utt2spk_path: A utt2spk file.
-        utt_id: An id that can give us the fMLLR transform of a speaker.
-        output_path: A path to save the transform matrix.
-    """
-    trans_rspec = 'ark:' + transform_path
-    utt2spk_rspec = 'ark:' + utt2spk_path
-    trans_map = RandomAccessMatrixReaderMapped(trans_rspec, utt2spk_rspec)
-    mat = trans_map.value(utt_id)
-    write_matrix(mat, output_path, True)
 
 
 def notch_filtering(wav, fs, w0, Q):

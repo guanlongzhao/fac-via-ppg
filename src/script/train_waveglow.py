@@ -24,7 +24,9 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # *****************************************************************************
-import argparse
+
+"""Modified from https://github.com/NVIDIA/waveglow/blob/master/train.py"""
+
 import json
 import os
 import torch

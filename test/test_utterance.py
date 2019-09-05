@@ -483,30 +483,6 @@ class TestUtterance(unittest.TestCase):
         self.assertTrue(
             set(sym_table.items()) == set(correct_sym_table.items()))
 
-    def test_get_alignment_valid(self):
-        fs, wav = wavfile.read('data/test_mono_channel.wav')
-        with open('data/test_mono_channel.txt', 'r') as reader:
-            text = reader.readline()
-        utt = utterance.Utterance(wav, fs, text)
-        tg = utt.get_alignment()
-        self.assertEqual(len(tg), 2)
-
-    def test_get_alignment_invalid(self):
-        try:
-            self.utt.get_alignment()
-        except ValueError:
-            pass
-
-    def test_get_phone_tier_valid(self):
-        fs, wav = wavfile.read('data/test_mono_channel.wav')
-        with open('data/test_mono_channel.txt', 'r') as reader:
-            text = reader.readline()
-        utt = utterance.Utterance(wav, fs, text)
-        utt.get_alignment()
-        utt.kaldi_shift = 5
-        utt.get_phone_tier()
-        self.assertTrue(len(utt.phone) > 0)
-
     def test_get_phone_tier_invalid_0(self):
         try:
             self.utt.get_phone_tier()
@@ -519,16 +495,6 @@ class TestUtterance(unittest.TestCase):
             self.utt.get_phone_tier()
         except ValueError:
             pass
-
-    def test_get_word_tier_valid(self):
-        fs, wav = wavfile.read('data/test_mono_channel.wav')
-        with open('data/test_mono_channel.txt', 'r') as reader:
-            text = reader.readline()
-        utt = utterance.Utterance(wav, fs, text)
-        utt.get_alignment()
-        utt.kaldi_shift = 5
-        utt.get_word_tier()
-        self.assertTrue(len(utt.word) > 0)
 
     def test_get_word_tier_invalid_0(self):
         try:
@@ -562,44 +528,3 @@ class TestUtterance(unittest.TestCase):
             self.utt.get_monophone_ppg()
         except ValueError:
             pass
-
-    def test_get_vocoder_feat_valid_mono(self):
-        fs, wav = wavfile.read('data/test_mono_channel.wav')
-        utt = utterance.Utterance(wav, fs)
-        utt.get_vocoder_feat()
-        self.assertEqual(utt.mcep_dim, 60)
-        self.assertEqual(utt.bap_dim, 5)
-
-    def test_get_vocoder_feat_valid_dual(self):
-        fs, wav = wavfile.read('data/test_dual_channel.wav')
-        utt = utterance.Utterance(wav, fs)
-        utt.get_vocoder_feat()
-        self.assertEqual(utt.mcep_dim, 60)
-        self.assertEqual(utt.bap_dim, 5)
-
-    def test_get_vocoder_feat_invalid_0(self):
-        try:
-            self.utt.get_vocoder_feat()
-        except ValueError:
-            pass
-
-    def test_get_vocoder_feat_invalid_1(self):
-        try:
-            self.utt.get_vocoder_feat(window_size=25)
-        except ValueError:
-            pass
-
-    def test_get_vocoder_feat_invalid_3(self):
-        try:
-            fs, wav = wavfile.read('data/test_mono_channel.wav')
-            utt = utterance.Utterance(wav, fs)
-            utt.get_vocoder_feat(pitch_tracker='legacy_straight')
-        except ValueError:
-            pass
-
-    def test_resynthesize(self):
-        fs, wav = wavfile.read('data/test_dual_channel.wav')
-        utt = utterance.Utterance(wav, fs)
-        utt.get_vocoder_feat()
-        wav = utt.resynthesize()
-        self.assertTrue(isinstance(wav, np.ndarray))

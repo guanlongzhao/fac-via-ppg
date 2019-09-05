@@ -23,7 +23,6 @@ from kaldi.matrix import Vector, Matrix, SubMatrix
 from kaldi.matrix.common import MatrixTransposeType
 from kaldi.matrix.sparse import SparseMatrix
 from kaldi.util.io import xopen
-from kaldi import online2
 from scipy.io import wavfile
 
 
@@ -187,52 +186,3 @@ def parse_config(config_path: str):
         options = dict([tuple(line.split('=')) for
                         line in f.read().splitlines(False)])
     return options
-
-
-def compute_mfcc_plus_ivector(wav_data: WaveData, config_path: str):
-    """Compute MFCCs and ivector using the OnlineNnetFeaturePipeline.
-    Inspired by https://github.com/kaldi-asr/kaldi/blob/master/src/online2bin
-    /online2-wav-nnet3-latgen-faster.cc
-
-    Args:
-        wav_data: WaveData.
-        config_path: Path to the online config file.
-
-    Returns:
-        mfccs: T*D1 matrix.
-        ivectors: T*D2 matrix.
-    """
-    options = parse_config(config_path)
-    feature_opts = online2.OnlineNnetFeaturePipelineConfig()
-    feature_opts.ivector_extraction_config = \
-        options['--ivector-extraction-config']
-    feature_opts.mfcc_config = options['--mfcc-config']
-    feature_opts.silence_weighting_config.silence_phones_str = \
-        options['--endpoint.silence-phones']
-    feature_info = \
-        online2.OnlineNnetFeaturePipelineInfo().from_config(feature_opts)
-    feature_info.ivector_extractor_info.use_most_recent_ivector = True
-    feature_info.ivector_extractor_info.greedy_ivector_extractor = True
-    feature_info.mfcc_opts.frame_opts.allow_downsample = True
-    feature_info.mfcc_opts.frame_opts.frame_shift_ms = \
-        int(options['--frame-shift'])
-    feature_info.ivector_extractor_info.ivector_period = \
-        int(options['--frame-shift'])
-    feature_pipeline = online2.OnlineNnetFeaturePipeline(feature_info)
-
-    wav = \
-        Vector(wav_data.data().shape[1]).copy_row_from_mat_(wav_data.data(), 0)
-
-    feature_pipeline.accept_waveform(wav_data.samp_freq, wav)
-    feature_pipeline.input_finished()
-    num_frames = feature_pipeline.num_frames_ready()
-    num_ceps = feature_info.mfcc_opts.num_ceps
-    mfccs = Matrix(num_frames, num_ceps)
-    feature_pipeline.input_feature().get_frames(list(range(num_frames)), mfccs)
-
-    num_ivecs = feature_info.ivector_extractor_info.extractor.ivector_dim()
-    ivectors = Matrix(num_frames, num_ivecs)
-    feature_pipeline.ivector_feature().get_frames(list(range(num_frames)),
-                                                  ivectors)
-
-    return mfccs, ivectors

@@ -7,10 +7,10 @@
         "iters_per_checkpoint": 2500,
         "batch_size": 3,
         "seed": 16807,
-        "checkpoint_path": "/media/guanlong/DATA1/exp/ppg-speech/waveglow/waveglow_20190322-164430/waveglow_245000"
+        "checkpoint_path": ""
     },
     "data_config": {
-        "training_files":"/home/guanlong/PycharmProjects/ppg-speech/data/filelists/zhaa_train_filelist_noise_reduced.txt",
+        "training_files":"",
         "segment_length": 10000,
         "sampling_rate": 16000,
         "filter_length": 1024,

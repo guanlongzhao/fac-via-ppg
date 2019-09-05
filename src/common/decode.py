@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This module provides handy functions for Kaldi-decoding related tasks
-"""
+"""This module provides handy functions for Kaldi-decoding related tasks."""
 
 from kaldi import nnet3
 from kaldi.util.io import xopen

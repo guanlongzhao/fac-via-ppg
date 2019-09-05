@@ -30,7 +30,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-"""From https://github.com/NVIDIA/tacotron2"""
+"""Modified from https://github.com/NVIDIA/tacotron2"""
 
 import torch
 import numpy as np

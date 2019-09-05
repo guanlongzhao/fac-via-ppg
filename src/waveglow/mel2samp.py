@@ -31,7 +31,6 @@ import json
 import torch
 import torch.utils.data
 import sys
-from common.utterance import Utterance
 from scipy.io import wavfile
 
 # We're using the audio processing from TacoTron2 to make sure it matches

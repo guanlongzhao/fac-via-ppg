@@ -28,9 +28,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""From https://github.com/NVIDIA/tacotron2"""
+"""Modified from https://github.com/NVIDIA/tacotron2"""
 
-import torch
 
 class LossScaler:
 
@@ -60,6 +59,7 @@ class LossScaler:
         scaled_loss = loss*self.loss_scale
         scaled_loss.backward()
 
+
 class DynamicLossScaler:
 
     def __init__(self,
@@ -74,7 +74,6 @@ class DynamicLossScaler:
 
     # `params` is a list / generator of torch.Variable
     def has_overflow(self, params):
-#        return False
         for p in params:
             if p.grad is not None and DynamicLossScaler._has_inf_or_nan(p.grad.data):
                 return True
@@ -91,7 +90,6 @@ class DynamicLossScaler:
     # `overflow` is boolean indicating whether we overflowed in gradient
     def update_scale(self, overflow):
         if overflow:
-            #self.cur_scale /= self.scale_factor
             self.cur_scale = max(self.cur_scale/self.scale_factor, 1)
             self.last_overflow_iter = self.cur_iter
         else:
@@ -117,7 +115,6 @@ class DynamicLossScaler:
 if __name__ == "__main__":
     import torch
     from torch.autograd import Variable
-    from dynamic_loss_scaler import DynamicLossScaler
 
     # N is batch size; D_in is input dimension;
     # H is hidden dimension; D_out is output dimension.

@@ -28,7 +28,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""From https://github.com/NVIDIA/tacotron2"""
+"""Modified from https://github.com/NVIDIA/tacotron2"""
 
 import matplotlib
 matplotlib.use("Agg")

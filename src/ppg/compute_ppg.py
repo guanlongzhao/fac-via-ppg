@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This module contains functions related to PPGs.
-"""
+"""This module contains functions related to PPGs."""
 
 import os
 import re
 import logging
-from kaldi import nnet3, chain
+from kaldi import nnet3
 from kaldi.nnet3 import Nnet
 from kaldi.util.io import read_matrix
 from kaldi.feat.functions import splice_frames
@@ -27,9 +26,6 @@ from kaldi.feat.mfcc import Mfcc, MfccOptions
 from kaldi.matrix.sparse import SparseMatrix
 from kaldi.matrix import Matrix, Vector
 from kaldi.matrix.common import MatrixTransposeType
-from kaldi.cudamatrix import CuMatrix
-from kaldi.fstext import StdVectorFst
-from math import isnan
 from common import feat
 from common import decode
 from numpy import ndarray
@@ -41,10 +37,6 @@ NNET_PATH = os.path.join(DATA_DIR, 'am', 'final.raw')
 LDA_PATH = os.path.join(DATA_DIR, 'feats', 'final.mat')
 REDUCE_DIM_PATH = os.path.join(DATA_DIR, 'feats', 'reduce_dim.mat')
 SPLICE_OPTS_PATH = os.path.join(DATA_DIR, 'feats', 'splice_opts')
-# Speaker dependent fmllr transforms. key: speaker-id, value: path to fmllr
-# matrix file.
-FMLLR_PATHS = {'rms': os.path.join(DATA_DIR, 'feats', 'rms.fmllr'),
-               'clb': os.path.join(DATA_DIR, 'feats', 'clb.fmllr')}
 
 
 def compute_full_ppg(nnet: Nnet, feats: Matrix) -> Matrix:
@@ -76,73 +68,6 @@ def compute_full_ppg(nnet: Nnet, feats: Matrix) -> Matrix:
         nnet_computer.get_output_for_frame(i, temp)
         raw_ppgs.copy_row_from_vec_(temp, i)
     return raw_ppgs
-
-
-def compute_chain_full_ppg(nnet: Nnet, den_fst: StdVectorFst, mfccs: Matrix,
-                           ivecs: Matrix, is_hidden_feats=False) -> Matrix:
-    """Compute full PPG features given appropriate input features using a
-    chain model. It can be a BiLSTM or TDNN model.
-
-    It is a close reimplementation of
-    https://github.com/kaldi-asr/kaldi/blob/master/src/chainbin/nnet3-chain
-    -compute-post.cc
-
-    Args:
-        nnet: An neural network AM.
-        den_fst: A dense FST.
-        mfccs: Suitable T*D input feature matrix.
-        ivecs: T*D' ivector matrix.
-        is_hidden_feats: If set to True, it means that the given nnet model
-        will output the hidden bottleneck features -- the nnet output prior
-        to the softmax (or other operations). And we will skip the chain
-        operations.
-
-    Returns:
-        posteriors_cpu: T*K raw PPGs, K is the number of senones.
-    """
-    # Obtain the nnet computer, for some unknown reason, the computer must be
-    # constructed within this function.
-    nnet3.set_batchnorm_test_mode(True, nnet)
-    nnet3.set_dropout_test_mode(True, nnet)
-    nnet3.collapse_model(nnet3.CollapseModelConfig(), nnet)
-    opts = nnet3.NnetSimpleComputationOptions()
-    opts.acoustic_scale = 1.0
-    compiler = nnet3.CachingOptimizingCompiler. \
-        new_with_optimize_opts(nnet, opts.optimize_config)
-    priors = Vector()  # We do not need prior
-    nnet_computer = nnet3.DecodableNnetSimple(opts, nnet, priors, mfccs,
-                                              compiler, None, ivecs, 1)
-    # Obtain frame-level raw nnet outputs -- they are not PPGs yet.
-    raw_ppgs = Matrix(nnet_computer.num_frames(), nnet_computer.output_dim())
-    for i in range(nnet_computer.num_frames()):
-        temp = Vector(nnet_computer.output_dim())
-        nnet_computer.get_output_for_frame(i, temp)
-        raw_ppgs.copy_row_from_vec_(temp, i)
-
-    if is_hidden_feats:
-        return raw_ppgs
-
-    # Chain operations.
-    chain_opts = chain.ChainTrainingOptions()
-    chain_opts.leaky_hmm_coefficient = 0.1
-    num_pdfs = nnet.output_dim('output')
-    den_graph = chain.DenominatorGraph(den_fst, num_pdfs)
-    gpu_raw_ppgs = CuMatrix.from_matrix(raw_ppgs)
-    den_computation = chain.DenominatorComputation(chain_opts, den_graph, 1,
-                                                   gpu_raw_ppgs)
-    forward_prob = den_computation.forward()
-    num_frames = gpu_raw_ppgs.num_rows()
-    posteriors = CuMatrix.from_size(num_frames, num_pdfs)
-    ok = den_computation.backward(1, posteriors)
-
-    if not ok or isnan(forward_prob):
-        raise ValueError('Something went wrong for this utterance;'
-                         'forward-prob = %f, num-frames = %d.', forward_prob,
-                         num_frames)
-
-    posteriors_cpu = Matrix(num_frames, num_pdfs)
-    posteriors.swap_with_matrix(posteriors_cpu)
-    return posteriors_cpu.numpy()
 
 
 def reduce_ppg_dim(ppgs: Matrix, transform: SparseMatrix) -> Matrix:
@@ -177,14 +102,13 @@ def compute_feat_for_nnet_internal(wav: WaveData, lda: Matrix,
     Args:
         wav: A Kaldi WaveData object.
         lda: A D*D LDA transform matrix.
-        **kwargs: See "options." "fmllr" should be a D*(D+1) matrix.
+        **kwargs: See "options"
 
     Returns:
         feats: A T*D feature matrix.
     """
     options = {"is_use_energy": False, "is_downsample": True, "frame_shift": 10,
-               "is_snip_edges": False, "left_context": 3, "right_context": 3,
-               "fmllr": None}
+               "is_snip_edges": False, "left_context": 3, "right_context": 3}
     for key, val in kwargs.items():
         if key in options:
             options[key] = val
@@ -208,10 +132,6 @@ def compute_feat_for_nnet_internal(wav: WaveData, lda: Matrix,
 
     # Apply LDA
     feats = feat.apply_feat_transform(feats, lda)
-
-    # Apply fMLLR
-    if options['fmllr']:
-        feats = feat.apply_feat_transform(feats, options['fmllr'])
 
     return feats
 
@@ -243,8 +163,7 @@ def compute_feat_for_nnet(wav_path: str, lda_path: str) -> Matrix:
 
 
 def compute_monophone_ppg(wav: WaveData, nnet: Nnet, lda: Matrix,
-                          transform: SparseMatrix, shift=10,
-                          fmllr=None) -> ndarray:
+                          transform: SparseMatrix, shift=10) -> ndarray:
     """A convenient one-stop interface for computing monophone PPGs.
 
     Args:
@@ -253,13 +172,11 @@ def compute_monophone_ppg(wav: WaveData, nnet: Nnet, lda: Matrix,
         lda: LDA transform.
         transform: Pdf-to-Monophone transformation.
         shift: [optional] Frame shift in ms.
-        fmllr: [optional] fMLLR transform matrix.
 
     Returns:
         monophone_ppgs: Monophone PPGs in numpy array.
     """
-    feats = compute_feat_for_nnet_internal(wav, lda, frame_shift=shift,
-                                           fmllr=fmllr)
+    feats = compute_feat_for_nnet_internal(wav, lda, frame_shift=shift)
     raw_ppgs = compute_full_ppg(nnet, feats)
     monophone_ppgs = reduce_ppg_dim(raw_ppgs, transform)
     monophone_ppgs = monophone_ppgs.numpy()
@@ -267,7 +184,7 @@ def compute_monophone_ppg(wav: WaveData, nnet: Nnet, lda: Matrix,
 
 
 def compute_full_ppg_wrapper(wav: WaveData, nnet: Nnet, lda: Matrix,
-                             shift=10, fmllr=None) -> ndarray:
+                             shift=10) -> ndarray:
     """A convenient one-stop interface for computing the full PPGs.
 
     Args:
@@ -275,13 +192,11 @@ def compute_full_ppg_wrapper(wav: WaveData, nnet: Nnet, lda: Matrix,
         nnet: Acoustic model.
         lda: LDA transform.
         shift: [optional] Frame shift in ms.
-        fmllr: [optional] fMLLR transform matrix.
 
     Returns:
         raw_ppgs: Full PPGs in numpy array.
     """
-    feats = compute_feat_for_nnet_internal(wav, lda, frame_shift=shift,
-                                           fmllr=fmllr)
+    feats = compute_feat_for_nnet_internal(wav, lda, frame_shift=shift)
     raw_ppgs = compute_full_ppg(nnet, feats)
     raw_ppgs = raw_ppgs.numpy()
     return raw_ppgs
@@ -299,8 +214,7 @@ class DependenciesPPG(object):
                  nnet_path=NNET_PATH,
                  lda_path=LDA_PATH,
                  reduce_dim_path=REDUCE_DIM_PATH,
-                 splice_opts_path=SPLICE_OPTS_PATH,
-                 fmllr_paths=FMLLR_PATHS):
+                 splice_opts_path=SPLICE_OPTS_PATH):
         """Load the given resources.
 
         Args:
@@ -308,7 +222,6 @@ class DependenciesPPG(object):
             lda_path: Path to LDA.
             reduce_dim_path: Path to pdf-to-Monophone transformation.
             splice_opts_path: Path to splice options.
-            fmllr_paths: See FMLLR_PATHS.
         """
         # Check inputs
         if not os.path.isfile(nnet_path):
@@ -341,8 +254,3 @@ class DependenciesPPG(object):
             logging.warning("Splice options are empty.")
         self.left_context = context[0]
         self.right_context = context[1]
-        self.fmllr_mats = {}
-        for key, val in fmllr_paths.items():
-            if not os.path.isfile(val):
-                logging.error("File %s does not exist!", val)
-            self.fmllr_mats[key] = read_matrix(val)

@@ -14,17 +14,14 @@
 
 """This module provides a base data utterance class and helper functions."""
 
-import datetime
 import logging
 import numpy as np
 import ppg
-import pyworld as pw
 import re
-import time
 import math
 from common.data_utterance_pb2 import DataUtterance, Segment, MetaData,\
     VocoderFeature
-from common.align import write_tg_to_str, read_tg_from_str, MontrealAligner
+from common.align import write_tg_to_str, read_tg_from_str
 from common.feat import read_wav_kaldi_internal
 from numpy import ndarray
 from scipy.io import wavfile
@@ -380,24 +377,6 @@ class Utterance(object):
         with open(pb_path, 'wb') as writer:
             writer.write(self.write_internal())
 
-    def get_alignment(self) -> TextGrid:
-        """A wrapper function to initialize the alignment of this utterance.
-
-        Requires non-empty waveform, fs, and text data.
-
-        Returns:
-            tg: The alignment in TextGrid format.
-        """
-        if self.wav.size == 0 or self.fs < 0 or self.text == '':
-            raise ValueError('To perform alignment, the object must contain '
-                             'valid speech data, sampling frequency, and the '
-                             'text transcript.')
-
-        aligner = MontrealAligner()
-        tg = aligner.align_single_internal(self.wav, self.fs, self.text)
-        self.align = tg
-        return tg
-
     def get_phone_tier(self) -> IntervalTier:
         """A wrapper function to initialize the phone tier of this utterance.
 
@@ -460,88 +439,6 @@ class Utterance(object):
                                                        ppg_deps.monophone_trans,
                                                        self.kaldi_shift)
         return self.monophone_ppg
-
-    def get_vocoder_feat(self, **kwargs):
-        """Extract vocoder features. Currently does not save the raw spec and ap
-
-        Args:
-            See 'options'.
-        """
-        options = {'f0_floor': DEFAULT_F0_FLOOR,
-                   'f0_ceil': DEFAULT_F0_CEIL,
-                   'shift': DEFAULT_SHIFT,
-                   'pitch_tracker': DEFAULT_PITCH_TRACKER,
-                   'fft_size': DEFAULT_FFT_SIZE,
-                   'mcep_dim': DEFAULT_MCEP_DIM}
-        for key, val in kwargs.items():
-            if key in options:
-                options[key] = val
-            else:
-                raise ValueError("Option %s not allowed!" % key)
-
-        if self.wav.size == 0 or self.fs < 0:
-            raise ValueError('To perform analysis, the object must contain '
-                             'valid speech data and sampling frequency.')
-
-        if self.wav.ndim >= 2:
-            x = self.wav[:, 0]
-        else:
-            x = self.wav
-        if x.max() > 1:  # If it is in the int16 format, convert to float.
-            x = x / 32767  # Required by vocoder. [-1, 1].
-
-        fs = self.fs
-
-        # Extracting raw F0.
-        if options['pitch_tracker'] == 'dio':
-            _f0, t = pw.dio(x, fs, f0_floor=options['f0_floor'],
-                            f0_ceil=options['f0_ceil'],
-                            frame_period=options['shift'])
-        elif options['pitch_tracker'] == 'harvest':
-            _f0, t = pw.harvest(x, fs, f0_floor=options['f0_floor'],
-                                f0_ceil=options['f0_ceil'],
-                                frame_period=options['shift'])
-        else:
-            raise ValueError('F0 tracker %s not supported!' % options[
-                'pitch_tracker'])
-        # Refine F0.
-        f0 = pw.stonemask(x, _f0, t, fs)
-        # Spectrogram and mel-cepstrum.
-        sp = pw.cheaptrick(x, f0, t, fs, f0_floor=options['f0_floor'],
-                           fft_size=options['fft_size'])
-        mcep = pw.code_spectral_envelope(sp, fs, options['mcep_dim'])
-        # Aperiodicity; band-ap, 16KHz: 1, 48KHz: 5.
-        ap = pw.d4c(x, f0, t, fs, fft_size=options['fft_size'])
-        bap = pw.code_aperiodicity(ap, fs)
-
-        # Save to the object.
-        self.vocoder = 'WORLD'
-        self.mcep = mcep
-        self.f0 = f0
-        self.bap = bap
-        self.temporal_position = t
-        self.vocoder_shift = options['shift']
-        self.fft_size = options['fft_size']
-        self.f0_floor = options['f0_floor']
-        self.f0_ceil = options['f0_ceil']
-        timestamp = datetime.datetime.fromtimestamp(time.time())
-        self.timestamp = '%04d%02d%02d-%02d%02d%02d' % (
-            timestamp.year, timestamp.month, timestamp.day, timestamp.hour,
-            timestamp.minute, timestamp.second)
-        self.pitch_tracker = options['pitch_tracker']
-
-    def resynthesize(self) -> ndarray:
-        """Re-synthesize the audio from f0, mcep, and bap.
-
-        This re-synthesis process does not update the "wav" field.
-
-        Returns:
-            The re-synthesized waveform ranging from -1 to 1.
-        """
-        sp = pw.decode_spectral_envelope(self.mcep, self.fs, self.fft_size)
-        ap = pw.decode_aperiodicity(self.bap, self.fs, self.fft_size)
-        wav = pw.synthesize(self.f0, sp, ap, self.fs, self.vocoder_shift)
-        return wav
 
     def write_audio(self, path):
         """Save the audio to the given path.
