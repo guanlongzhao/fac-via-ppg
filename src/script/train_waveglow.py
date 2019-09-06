@@ -30,8 +30,6 @@
 import json
 import os
 import torch
-import datetime
-import time
 from common.logger import WaveglowLogger
 
 #=====START: ADDED FOR DISTRIBUTED======
@@ -148,6 +146,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
 
             iteration += 1
 
+
 if __name__ == "__main__":
     config_file_path = '../waveglow/config.json'
 
@@ -157,16 +156,12 @@ if __name__ == "__main__":
     config = json.loads(data)
 
     # Prepare paths for this experiment, this helps avoid collisions.
-    timestamp = datetime.datetime.fromtimestamp(time.time())
-    exp_output_root_dir = \
-        '/media/guanlong/DATA1/exp/ppg-speech/waveglow/waveglow_%04d' \
-        '%02d%02d-%02d%02d%02d' % (
-            timestamp.year, timestamp.month, timestamp.day, timestamp.hour,
-            timestamp.minute, timestamp.second)
-    os.mkdir(exp_output_root_dir)
-    config["train_config"]["output_directory"] = exp_output_root_dir
+    if not os.path.exists(config["train_config"]["output_directory"]):
+        os.mkdir(config["train_config"]["output_directory"])
+
     # Stage the parameters.
-    config_snapshot_file = os.path.join(exp_output_root_dir, 'config.json')
+    config_snapshot_file = os.path.join(config["train_config"][
+                                             "output_directory"], 'config.json')
     with open(config_snapshot_file, 'w') as writer:
         json.dump(config, writer)
 

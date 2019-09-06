@@ -55,7 +55,8 @@ def create_hparams(**kwargs):
         "cudnn_enabled": True,
         "cudnn_benchmark": False,
         "output_directory": None,  # Directory to save checkpoints.
-        "log_directory": 'log',  # Directory to save tensorboard logs.
+        # Directory to save tensorboard logs. Just keep it like this.
+        "log_directory": 'log',
         "checkpoint_path": '',  # Path to a checkpoint file.
         "warm_start": False,  # Load the model only (warm start)
         "n_gpus": 1,  # Number of GPUs
@@ -65,8 +66,12 @@ def create_hparams(**kwargs):
         ################################
         # Data Parameters             #
         ################################
-        "training_files": '/home/guanlong/PycharmProjects/fac-via-ppg/data/filelists/ykwk_train_filelist_noise_reduced_lite.txt',
-        "validation_files": '/home/guanlong/PycharmProjects/fac-via-ppg/data/filelists/ykwk_val_filelist_noise_reduced.txt',
+        # Passed as a txt file, see data/filelists/training-set.txt for an
+        # example.
+        "training_files": '',
+        # Passed as a txt file, see data/filelists/validation-set.txt for an
+        # example.
+        "validation_files": '',
         "is_full_ppg": True,  # Whether to use the full PPG or not.
         "is_append_f0": False,  # Currently only effective at sentence level
         "ppg_subsampling_factor": 1,  # Sub-sample the ppg & acoustic sequence.
@@ -76,12 +81,11 @@ def create_hparams(**kwargs):
         # |True                  |False           |Please set cache path
         # |False                 |True            |Overwrite the cache path
         # |False                 |False           |Ignores the cache path
-        "load_feats_from_disk": True,  # Remember to set the path.
+        "load_feats_from_disk": False,  # Remember to set the path.
         # Mutually exclusive with 'load_feats_from_disk', will overwrite
         # 'feats_cache_path' if set.
         "is_cache_feats": False,
-        "feats_cache_path":
-            '/data_repo/arctic/cache/ykwk_feat_cache_noise_reduced_lite.pkl',
+        "feats_cache_path": '',
 
         ################################
         # Audio Parameters             #
@@ -98,7 +102,6 @@ def create_hparams(**kwargs):
         ################################
         # Model Parameters             #
         ################################
-        # For chain 8629, for fc 5816, for mono 40, for mono+f0 43
         "n_symbols": 5816,
         "symbols_embedding_dim": 600,
 
@@ -156,7 +159,10 @@ def create_hparams(**kwargs):
 
 
 def create_hparams_stage(**kwargs):
-    """Create model hyperparameters. Parse nondefault from given string."""
+    """Create model hyperparameters. Parse nondefault from given string.
+
+    These are the parameters used for our interspeech 2019 submission.
+    """
 
     hparams = {
         'attention_dim': 150,

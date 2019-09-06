@@ -31,7 +31,6 @@
 
 """Modified from https://github.com/NVIDIA/tacotron2"""
 
-import datetime
 import os
 import time
 import math
@@ -280,19 +279,15 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 if __name__ == '__main__':
     hparams = create_hparams()
 
-    # Prepare paths for this experiment, this helps avoid collisions.
-    timestamp = datetime.datetime.fromtimestamp(time.time())
-    exp_output_root_dir = \
-        '/media/guanlong/DATA1/exp/ppg-speech/tacotron/trial_%04d%02d%02d' \
-        '-%02d%02d%02d' \
-        % (timestamp.year, timestamp.month, timestamp.day, timestamp.hour,
-           timestamp.minute, timestamp.second)
-    os.mkdir(exp_output_root_dir)
-    if hparams.output_directory is None:
-        hparams.output_directory = os.path.join(exp_output_root_dir, 'output')
+    if not hparams.output_directory:
+        raise FileExistsError('Please specify the output dir.')
+    else:
+        if not os.path.exists(hparams.output_directory):
+            os.mkdir(hparams.output_directory)
 
     # Record the hyper-parameters.
-    hparams_snapshot_file = os.path.join(exp_output_root_dir, 'hparams.txt')
+    hparams_snapshot_file = os.path.join(hparams.output_directory,
+                                         'hparams.txt')
     with open(hparams_snapshot_file, 'w') as writer:
         pprint(hparams.__dict__, writer)
 

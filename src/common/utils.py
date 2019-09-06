@@ -128,3 +128,54 @@ def notch_filtering(wav, fs, w0, Q):
     wav = signal.lfilter(b, a, wav)
     return wav
 
+
+def get_mel(wav, stft):
+    audio = torch.FloatTensor(wav.astype(np.float32))
+    audio_norm = audio / 32768
+    audio_norm = audio_norm.unsqueeze(0)
+    audio_norm = torch.autograd.Variable(audio_norm, requires_grad=False)
+    # (1, n_mel_channels, T)
+    acoustic_feats = stft.mel_spectrogram(audio_norm)
+    return acoustic_feats
+
+
+def waveglow_audio(mel, waveglow, sigma, is_cuda_output=False):
+    mel = torch.autograd.Variable(mel.cuda())
+    if not is_cuda_output:
+        with torch.no_grad():
+            audio = 32768 * waveglow.infer(mel, sigma=sigma)[0]
+        audio = audio.cpu().numpy()
+        audio = audio.astype('int16')
+    else:
+        with torch.no_grad():
+            audio = waveglow.infer(mel, sigma=sigma).cuda()
+    return audio
+
+
+def get_inference(seq, model, is_clip=False):
+    """Tacotron inference.
+
+    Args:
+        seq: T*D numpy array.
+        model: Tacotron model.
+        is_clip: Set to True to avoid the artifacts at the end.
+
+    Returns:
+        synthesized mels.
+    """
+    # (T, D) numpy -> (1, D, T) cpu tensor
+    seq = torch.from_numpy(seq).float().transpose(0, 1).unsqueeze(0)
+    # cpu tensor -> gpu tensor
+    seq = to_gpu(seq)
+    mel_outputs, mel_outputs_postnet, _, alignments = model.inference(seq)
+    if is_clip:
+        return mel_outputs_postnet[:, :, 10:(seq.size(2)-10)]
+    else:
+        return mel_outputs_postnet
+
+
+def load_waveglow_model(path):
+    model = torch.load(path)['model']
+    model = model.remove_weightnorm(model)
+    model.cuda().eval()
+    return model

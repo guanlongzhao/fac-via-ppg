@@ -12,86 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from common.hparams import create_hparams_stage
-from script.train_ppg2mel import load_model
-from common.utils import to_gpu
-from common.layers import TacotronSTFT
-from common import feat
-from scipy.io import wavfile
-import numpy as np
-import sys
-import torch
-import ppg
-import os
-import logging
-import datetime
-import time
-# sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
-#                              'src', 'waveglow'))
-from waveglow.denoiser import Denoiser
 from common.data_utils import get_ppg
-
-
-def get_mel(wav, stft):
-    audio = torch.FloatTensor(wav.astype(np.float32))
-    audio_norm = audio / 32768
-    audio_norm = audio_norm.unsqueeze(0)
-    audio_norm = torch.autograd.Variable(audio_norm, requires_grad=False)
-    # (1, n_mel_channels, T)
-    acoustic_feats = stft.mel_spectrogram(audio_norm)
-    return acoustic_feats
-
-
-def waveglow_audio(mel, waveglow, sigma, is_cuda_output=False):
-    mel = torch.autograd.Variable(mel.cuda())
-    if not is_cuda_output:
-        with torch.no_grad():
-            audio = 32768 * waveglow.infer(mel, sigma=sigma)[0]
-        audio = audio.cpu().numpy()
-        audio = audio.astype('int16')
-    else:
-        with torch.no_grad():
-            audio = waveglow.infer(mel, sigma=sigma).cuda()
-    return audio
-
-
-def get_inference(seq, model, is_clip=False):
-    """Tacotron inference.
-
-    Args:
-        seq: T*D numpy array.
-        model: Tacotron model.
-        is_clip: Set to True to avoid the artifacts at the end.
-
-    Returns:
-        synthesized mels.
-    """
-    # (T, D) numpy -> (1, D, T) cpu tensor
-    seq = torch.from_numpy(seq).float().transpose(0, 1).unsqueeze(0)
-    # cpu tensor -> gpu tensor
-    seq = to_gpu(seq)
-    mel_outputs, mel_outputs_postnet, _, alignments = model.inference(seq)
-    if is_clip:
-        return mel_outputs_postnet[:, :, 10:(seq.size(2)-10)]
-    else:
-        return mel_outputs_postnet
-
-
-def load_waveglow_model(path):
-    model = torch.load(path)['model']
-    model = model.remove_weightnorm(model)
-    model.cuda().eval()
-    return model
+from common.hparams import create_hparams_stage
+from common.layers import TacotronSTFT
+from common.utils import waveglow_audio, get_inference, load_waveglow_model
+from scipy.io import wavfile
+from script.train_ppg2mel import load_model
+from waveglow.denoiser import Denoiser
+import argparse
+import logging
+import os
+import ppg
+import torch
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Generate accent conversion speech using pre-trained'
+                    'models.')
+    parser.add_argument('--ppg2mel_model', type=str, required=True,
+                        help='Path to the PPG-to-Mel model.')
+    parser.add_argument('--waveglow_model', type=str, required=True,
+                        help='Path to the WaveGlow model.')
+    parser.add_argument('--teacher_utterance_path', type=str, required=True,
+                        help='Path to a native speaker recording.')
+    parser.add_argument('--output_dir', type=str, required=True,
+                        help='Output dir, will save the audio and log info.')
+    args = parser.parse_args()
+
     # Prepare dirs
-    timestamp = datetime.datetime.fromtimestamp(time.time())
-    output_dir = \
-        '/media/guanlong/DATA1/exp/ppg-speech/samples/trial_%04d%02d%02d' \
-        '-%02d%02d%02d' \
-        % (timestamp.year, timestamp.month, timestamp.day, timestamp.hour,
-           timestamp.minute, timestamp.second)
+    output_dir = args.output_dir
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
     logging.basicConfig(filename=os.path.join(output_dir, 'debug.log'),
@@ -99,9 +49,9 @@ if __name__ == '__main__':
     logging.info('Output dir: %s', output_dir)
 
     # Parameters
-    checkpoint_path = ''
-    teacher_utt_path = ''
-    waveglow_path = ''
+    teacher_utt_path = args.teacher_utterance_path
+    checkpoint_path = args.ppg2mel_model
+    waveglow_path = args.waveglow_model
     is_clip = False  # Set to True to control the output length of AC.
     fs = 16000
     waveglow_sigma = 0.6
