@@ -78,3 +78,15 @@ generate_synthesis.py [-h] --ppg2mel_model PPG2MEL_MODEL
 - Syntheses and pre-trained models: [link](https://drive.google.com/file/d/1nye-CAGyz3diM5Q80s0iuBYgcIL_cqrs/view?usp=sharing)
 - Training data (L2-ARCTIC recordings after noise removal): [link](https://drive.google.com/file/d/1WnBHAfjEKdFTBDv5D6DxRnlcvfiODBgy/view?usp=sharing)
 - Demo: [link](https://guanlongzhao.github.io/demo/fac-via-ppg)
+
+### Citation
+Please kindly cite the following paper if you use this code repository in your work,
+
+```
+@inproceedings{Zhao2019ForeignAC,
+  title={Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams},
+  author={Guanlong Zhao and Shaojin Ding and Ricardo Gutierrez-Osuna},
+  year={2019},
+  booktitle={Proc. Interspeech 2019}
+}
+```
