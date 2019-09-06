@@ -1,6 +1,6 @@
 # Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams (accepted to Interspeech'19) 
 
-This branch hosts the code we used to
+This repository hosts the code we used to
 prepare our interspeech'19 paper titled "[Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams](https://psi.engr.tamu.edu/wp-content/uploads/2019/07/zhao2019interspeech.pdf)"
 
 ### Install
@@ -39,7 +39,7 @@ cd test
 This only does a few sanity checks, don't worry if the test coverage looks low :)
 
 ### Train PPG-to-Mel model
-Change default parameters in `src/common/hparams.py:create_hparams()`
+Change default parameters in `src/common/hparams.py:create_hparams()`.
 The training and validation data should be specified in text files, see `data/filelists` for examples.
 
 ```bash
