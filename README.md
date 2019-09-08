@@ -38,6 +38,8 @@ cd test
 
 This only does a few sanity checks, don't worry if the test coverage looks low :)
 
+Depending on your git configs, you may or may not need to recreate the symbolic links in `test/data`.
+
 ### Train PPG-to-Mel model
 Change default parameters in `src/common/hparams.py:create_hparams()`.
 The training and validation data should be specified in text files, see `data/filelists` for examples.
@@ -46,7 +48,7 @@ The training and validation data should be specified in text files, see `data/fi
 cd src/script
 python train_ppg2mel.py
 ```
-The `FP16` mode will not work, unfortunately.
+The `FP16` mode will not work, unfortunately :(
 
 ### Train WaveGlow model
 Change the default parameters in `src/waveglow/config.json`. The training data should be specified in the same manner as the PPG-to-Mel model.
@@ -75,9 +77,9 @@ generate_synthesis.py [-h] --ppg2mel_model PPG2MEL_MODEL
 
 ### Links
 
-- Syntheses and pre-trained models: [link](https://drive.google.com/file/d/1nye-CAGyz3diM5Q80s0iuBYgcIL_cqrs/view?usp=sharing)
-- Training data (L2-ARCTIC recordings after noise removal): [link](https://drive.google.com/file/d/1WnBHAfjEKdFTBDv5D6DxRnlcvfiODBgy/view?usp=sharing)
-- Demo: [link](https://guanlongzhao.github.io/demo/fac-via-ppg)
+- Syntheses and pre-trained models: [link to model and syntheses](https://drive.google.com/file/d/1nye-CAGyz3diM5Q80s0iuBYgcIL_cqrs/view?usp=sharing)
+- Training data (L2-ARCTIC recordings after noise removal): [link to training data](https://drive.google.com/file/d/1WnBHAfjEKdFTBDv5D6DxRnlcvfiODBgy/view?usp=sharing)
+- Demo: [link to audio samples](https://guanlongzhao.github.io/demo/fac-via-ppg)
 
 ### Citation
 Please kindly cite the following paper if you use this code repository in your work,
