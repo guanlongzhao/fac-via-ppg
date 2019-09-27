@@ -1,7 +1,7 @@
-# Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams (accepted to Interspeech'19) 
+# Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams
 
 This repository hosts the code we used to
-prepare our interspeech'19 paper titled "[Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams](https://psi.engr.tamu.edu/wp-content/uploads/2019/07/zhao2019interspeech.pdf)"
+prepare our interspeech'19 paper titled "[Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams](https://www.isca-speech.org/archive/Interspeech_2019/pdfs/1778.pdf)"
 
 ### Install
 
@@ -18,7 +18,7 @@ conda env create -f environment.yml
 # Activate the installed environment
 conda activate ppg-speech
 
-# Compile protocol buffer
+# Compile protocol buffer to get the data_utterance_pb2.py file
 protoc -I=src/common --python_out=src/common src/common/data_utterance.proto
 
 # Include src in your PYTHONPATH
@@ -85,10 +85,13 @@ generate_synthesis.py [-h] --ppg2mel_model PPG2MEL_MODEL
 Please kindly cite the following paper if you use this code repository in your work,
 
 ```
-@inproceedings{Zhao2019ForeignAC,
-  title={Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams},
+@inproceedings{zhao2019ForeignAC,
   author={Guanlong Zhao and Shaojin Ding and Ricardo Gutierrez-Osuna},
-  year={2019},
-  booktitle={Proc. Interspeech 2019}
+  title={{Foreign Accent Conversion by Synthesizing Speech from Phonetic Posteriorgrams}},
+  year=2019,
+  booktitle={Proc. Interspeech 2019},
+  pages={2843--2847},
+  doi={10.21437/Interspeech.2019-1778},
+  url={http://dx.doi.org/10.21437/Interspeech.2019-1778}
 }
 ```
