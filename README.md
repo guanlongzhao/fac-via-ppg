@@ -27,6 +27,8 @@ export PYTHONPATH=$PROJECT_ROOT_DIR/src:$PYTHONPATH
 
 If `conda` complains that some packages are missing, it is very likely that you can find a similar version of that package on anaconda's archive.
 
+If you are using `pytorch >= 1.3`, you may need to remove the `byte()` method call in `src.common.utils.get_mask_from_lengths`.
+
 ### Run unit tests
 
 ```bash
