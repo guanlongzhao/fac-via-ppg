@@ -79,8 +79,6 @@ generate_synthesis.py [-h] --ppg2mel_model PPG2MEL_MODEL
 
 ### Links
 
-- Syntheses and pre-trained models: [link to model and syntheses](https://drive.google.com/file/d/1nye-CAGyz3diM5Q80s0iuBYgcIL_cqrs/view?usp=sharing)
-- Training data (L2-ARCTIC recordings after noise removal): [link to training data](https://drive.google.com/file/d/1WnBHAfjEKdFTBDv5D6DxRnlcvfiODBgy/view?usp=sharing)
 - Demo: [link to audio samples](https://guanlongzhao.github.io/demo/fac-via-ppg)
 
 ### Citation
